@@ -1,0 +1,48 @@
+import cv2
+import numpy as np
+
+
+cap = cv2.VideoCapture('.\\Resource\\red.avi')
+
+while cap.isOpened():
+    ret,frame = cap.read()
+    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    lower_hsv = np.array([0, 43, 46])                                      
+    high_hsv = np.array([50, 255, 255])
+    mask = cv2.inRange(hsv, lowerb = lower_hsv, upperb = high_hsv)
+    kernel = np.ones((5,5), np.uint8)
+    closing = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+    opening = cv2.morphologyEx(closing, cv2.MORPH_OPEN, kernel)
+    # Preprocess
+
+    contours, hierarchy = cv2.findContours(opening,cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
+    area = 0
+    for cnt in contours:
+        # find bounding box coordinates
+        x, y, w, h = cv2.boundingRect(cnt)
+        rect = cv2.rectangle(opening, (x, y), (x+w, y+h), (0, 255, 0), 2)
+        # find minimum area
+        rect = cv2.minAreaRect(cnt)
+        # calculate coordinates of the minimum area rectangle
+        x_m, y_m = rect[0]
+        w_m, h_m = rect[1]
+        Area = w_m * h_m
+
+        if Area > 5000:
+            box = cv2.boxPoints(rect)
+            # normalize coordinates to integers
+            box = np.int0(box)
+            # draw contours
+            img_s = cv2.drawContours(frame, [box], -1, (0, 255, 0), 3)
+
+    cv2.imshow('video', img_s)
+    print (area)
+    c = cv2.waitKey(1)
+    if c == 27:
+        break
+
+cap.release()
+cv2.destroyAllWindows()
+
+
+
